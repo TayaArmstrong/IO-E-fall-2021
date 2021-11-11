@@ -1,0 +1,109 @@
+<html>
+<head>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.5/p5.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.5/addons/p5.dom.js"></script>
+	<script src="../lib/p5.speech.js"></script>
+    <script src="../lib/p5.serialport.js"></script>
+	<script>
+
+	var myRec = new p5.SpeechRec('en-US', parseResult); // new P5.SpeechRec object
+	myRec.continuous = true; // do continuous recognition
+	myRec.interimResults = false; // allow partial recognition (faster, less accurate)
+
+	var x, y;
+	var dx, dy;
+    var mostrecentwordcopy //= myRec.resultString.split(' ').pop();
+    var myVoice = new p5.Speech('Google UK English Male'); // new P5.Speech object
+
+
+	function setup()
+	{
+		// graphics stuff:
+		createCanvas(800, 600);
+		background(255, 255, 255);
+		fill(0, 0, 0, 255);
+		x = width/2;
+		y = height/2;
+		dx = 0;
+		dy = 0;
+
+		// instructions:
+		textSize(20);
+		textAlign(LEFT);
+		text("speak: temperature, humidity, pressure, music, clear", 20, 20);
+        
+        // Instantiate our SerialPort object
+        serial = new p5.SerialPort();
+
+        // Assuming our Arduino is connected, let's open the connection to it
+        // Change this to the name of your arduino's serial port
+        serial.open("COM7");
+
+        // When we some data from the serial port
+        serial.on('data', gotData);
+        // OR
+        //serial.onData(gotData);
+
+		//myRec.onResult = parseResult; // now in the constructor
+		myRec.start(); // start engine
+	}
+
+	function draw()
+	{
+		// ellipse(x, y, 5, 5);
+		// x+=dx;
+		// y+=dy;
+		// if(x<0) x = width;
+		// if(y<0) y = height;
+		// if(x>width) x = 0;
+		// if(y>height) y = 0;
+	}
+
+	function parseResult()
+	{
+		// recognition system will often append words into phrases.
+		// so hack here is to only use the last word:
+        var mostrecentword = myRec.resultString.split(' ').pop();
+        mostrecentwordcopy = mostrecentword;
+		if(mostrecentword.indexOf("temperature")!==-1) { 
+            // dx=-1;dy=0;
+            serial.write(1); //writes out the value of somevar to the serial device
+        }
+		else if(mostrecentword.indexOf("humidity")!==-1) { 
+            //dx=1;dy=0; 
+            serial.write(2); //writes out the value of somevar to the serial device
+        }
+		else if(mostrecentword.indexOf("music")!==-1) { 
+            //dx=0;dy=-1; 
+            serial.write(3); //writes out the value of somevar to the serial device
+        }
+		else if(mostrecentword.indexOf("pressure")!==-1) { 
+            //dx=0;dy=1; 
+            serial.write(4); //writes out the value of somevar to the serial device
+        }
+		else if(mostrecentword.indexOf("clear")!==-1) { background(255); }
+		console.log("parsed result");
+        //console.log(mostrecentword);
+	}
+
+    // There is data available to work with from the serial port
+    function gotData() {
+        var currentString = serial.readLine(); // read the incoming string
+        //trim(currentString); // remove any trailing whitespace
+        if (currentString.length > 0) {
+            // latestData = Number(currentString);
+            //console.log(latestData);
+            console.log(mostrecentwordcopy);
+            console.log(currentString);
+            myVoice.speak(currentString);
+            //console.log(currentString.length);
+
+        }
+
+    }
+
+</script>
+</head>
+<body>
+</body>
+</html>
